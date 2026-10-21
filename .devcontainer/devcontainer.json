@@ -1,0 +1,1 @@
+{"name":"Ubuntu limpio (como WSL recién instalado)","image":"mcr.microsoft.com/devcontainers/base:ubuntu-24.04","hostRequirements":{"cpus":2}}
