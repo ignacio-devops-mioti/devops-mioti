@@ -12,7 +12,7 @@ variable "grupo_recursos" {
 variable "departamento" {
   description = "Departamento al que se imputa el coste (etiqueta)"
   type        = string
-  default     = "formacion"
+  default     = "ventas"
 }
 
 locals {
