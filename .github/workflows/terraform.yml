@@ -1,0 +1,63 @@
+name: Terraform Azure
+
+on:
+  pull_request:
+    paths: ["terraform/azure-storage/**"]
+  push:
+    branches: [main]
+    paths: ["terraform/azure-storage/**"]
+  workflow_dispatch:
+    inputs:
+      accion:
+        description: "Que hacer"
+        type: choice
+        options: [plan, apply, destroy]
+        default: plan
+
+permissions:
+  contents: read
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/azure-storage
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Formato
+        run: terraform fmt -check
+
+      - name: Init (estado remoto en Azure)
+        run: >
+          terraform init -input=false
+          -backend-config="resource_group_name=rg-devops-mioti"
+          -backend-config="storage_account_name=stestado780732029"
+          -backend-config="container_name=tfstate"
+          -backend-config="key=azure-storage.tfstate"
+
+      - name: Validar
+        run: terraform validate
+
+      - name: Plan
+        if: github.event_name != 'workflow_dispatch' || inputs.accion == 'plan'
+        run: terraform plan -input=false
+
+      - name: Apply
+        if: github.event_name == 'workflow_dispatch' && inputs.accion == 'apply'
+        run: terraform apply -input=false -auto-approve
+
+      - name: Destroy
+        if: github.event_name == 'workflow_dispatch' && inputs.accion == 'destroy'
+        run: terraform destroy -input=false -auto-approve
