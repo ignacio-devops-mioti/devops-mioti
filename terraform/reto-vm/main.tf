@@ -7,10 +7,16 @@ variable "grupo_recursos" {
   default = "rg-devops-mioti"
 }
 
-variable "tamano" {
-  description = "Tamano de la VM (B1s esta incluida en la cuenta gratuita)"
+variable "region" {
+  description = "North Europe no ofrece VM pequenas a cuentas gratuitas: usamos Sweden Central"
   type        = string
-  default     = "Standard_B1s"
+  default     = "swedencentral"
+}
+
+variable "tamano" {
+  description = "B2ats_v2: incluida en los servicios gratuitos de 12 meses (750 h/mes)"
+  type        = string
+  default     = "Standard_B2ats_v2"
 }
 
 locals {
@@ -29,7 +35,7 @@ data "azurerm_resource_group" "rg" {
 resource "azurerm_virtual_network" "red" {
   name                = "vnet-reto"
   address_space       = ["10.20.0.0/16"]
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.region
   resource_group_name = data.azurerm_resource_group.rg.name
   tags                = local.etiquetas
 }
@@ -43,7 +49,7 @@ resource "azurerm_subnet" "subred" {
 
 resource "azurerm_network_interface" "nic" {
   name                = "nic-reto"
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.region
   resource_group_name = data.azurerm_resource_group.rg.name
   tags                = local.etiquetas
 
@@ -57,7 +63,7 @@ resource "azurerm_network_interface" "nic" {
 resource "azurerm_linux_virtual_machine" "vm" {
   name                  = "vm-reto-mioti"
   resource_group_name   = data.azurerm_resource_group.rg.name
-  location              = data.azurerm_resource_group.rg.location
+  location              = var.region
   size                  = var.tamano
   admin_username        = "azureuser"
   network_interface_ids = [azurerm_network_interface.nic.id]
